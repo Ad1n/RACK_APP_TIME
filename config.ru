@@ -1,3 +1,4 @@
+require 'rack'
 require_relative 'formatter'
 require_relative 'app'
 

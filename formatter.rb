@@ -2,29 +2,40 @@ class Formatter
 
   attr_reader :unknown_formats, :correct_formats
 
-  def initialize(formats)
-    @formats = formats
+  def initialize(params)
+    @format_param = params[0]
+    @time_formats = params[1].split("%2C").uniq
     @unknown_formats = []
     @correct_formats = []
   end
 
-  def self.time_formats
-    { "year" => Time.now.strftime(" %Y year"),
-      "month" => Time.now.strftime("%m month"),
-      "day" => Time.now.strftime(" %e day "),
-      "hour" => Time.now.strftime(" %H hour(s)"),
-      "minute" => Time.now.strftime(" %M minute(s)"),
-      "second" => Time.now.strftime(" %S second(s)") }
-  end
+  TIME_FORMATS = { "year" => " %Y year",
+                   "month" => "%m month",
+                   "day" => " %e day ",
+                   "hour" => " %H hour(s)",
+                   "minute" => " %M minute(s)",
+                   "second" => " %S second(s)" }
 
   def call
-    @formats.each do |format|
+    @time_formats.each do |format|
       valid?(format) ? @correct_formats << format : @unknown_formats << format
     end
   end
 
+  def output
+    result = []
+    if @unknown_formats.any?
+      ["Unknown time format(s): #{@unknown_formats}\n"]
+    elsif @format_param == 'format'
+      @correct_formats.each { |f| result << Time.now.strftime(TIME_FORMATS[f]) }
+      result << "\n"
+    else
+      ["Bad request. Wrong params. \n"]
+    end
+  end
+
   def valid?(format)
-    Formatter.time_formats.key?(format)
+    TIME_FORMATS.key?(format)
   end
 
 end
