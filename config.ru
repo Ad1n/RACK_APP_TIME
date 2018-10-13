@@ -1,5 +1,5 @@
-require_relative 'middleware/checker'
+require 'rack'
+require_relative 'formatter'
 require_relative 'app'
 
-use Checker
 run App.new

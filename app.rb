@@ -1,21 +1,15 @@
 class App
 
-  TIME_FORMATS = { "year" => Time.now.strftime(" %Y year"),
-                   "month" => Time.now.strftime("%m month"),
-                   "day" => Time.now.strftime(" %e day "),
-                   "hour" => Time.now.strftime(" %H hour(s)"),
-                   "minute" => Time.now.strftime(" %M minute(s)"),
-                   "second" => Time.now.strftime(" %S second(s)") }.freeze
-
   def call(env)
-    @env = env
+    @request = Rack::Request.new(env)
+    format_check
     [status, headers, body]
   end
 
   private
 
   def status
-    @env['REQUEST_PATH'] == "/time" ? 200 : 404
+    @formatter.unknown_formats.any? ? 400 : @request.path == "/time" ? 200 : 404
   end
 
   def headers
@@ -23,19 +17,17 @@ class App
   end
 
   def body
-    string_format = @env['QUERY_STRING'].split('=')
-    time_formats = string_format[1].split("%2C").uniq
-    unknown = []
-    result = []
-
-    time_formats.each do |format|
-      if string_format[0] == 'format' && status != 404
-         TIME_FORMATS.key?(format) ? result << TIME_FORMATS[format] : unknown << format
-      else
-        return ["Bad request \n"]
-      end
+    case status
+    when 404
+      ["Wrong path \n"]
+    else
+      @formatter.output
     end
-    unknown.empty? ? result << "\n" : ["Unknown time format(s): #{unknown}\n"]
+  end
+
+  def format_check
+    @formatter = Formatter.new(@request.params)
+    @formatter.call
   end
 
 end
